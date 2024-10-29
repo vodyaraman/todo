@@ -1,95 +1,124 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
+import React, { useEffect, useState } from 'react';
+import { Provider, useDispatch, useSelector } from 'react-redux';
+import { store, authSlice, todoSlice, AuthState, ToDoState, useLoginMutation } from './redux';
 
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
+    const dispatch = useDispatch();
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [login, { isLoading, isError }] = useLoginMutation();
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+    const handleLogin = async () => {
+        try {
+            const response = await login({ email: username, password }).unwrap();
+            if (response.token) {
+                localStorage.setItem('token', response.token);
+                onLogin();
+                dispatch(authSlice.actions.login());
+            }
+        } catch (error) {
+            console.error('Login failed:', error);
+        }
+    };
+
+    return (
+        <div>
+            <h1>Login</h1>
+            <input placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={handleLogin} disabled={isLoading}>Login</button>
+            {isError && <p style={{ color: 'red' }}>Login failed. Please try again.</p>}
         </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
-}
+    );
+};
+
+const ToDoPage = () => {
+    const dispatch = useDispatch();
+    const tasks = useSelector((state: { todo: ToDoState }) => state.todo.tasks);
+    const filter = useSelector((state: { todo: ToDoState }) => state.todo.filter);
+    const [taskText, setTaskText] = useState('');
+
+    const filteredTasks = tasks.filter((task) => {
+        if (filter === 'active') return !task.completed && !task.deleted;
+        if (filter === 'completed') return task.completed && !task.deleted;
+        if (filter === 'trash') return task.deleted;
+        return !task.deleted;
+    });
+
+    const handleAddTask = () => {
+        if (taskText.trim()) {
+            dispatch(todoSlice.actions.addTask(taskText));
+            setTaskText('');
+        }
+    };
+
+    return (
+        <div>
+            <h1>To-Do List</h1>
+            <input placeholder="New task" value={taskText} onChange={(e) => setTaskText(e.target.value)} />
+            <button onClick={handleAddTask}>Add Task</button>
+            <div>
+                <button onClick={() => dispatch(todoSlice.actions.setFilter('all'))}>All</button>
+                <button onClick={() => dispatch(todoSlice.actions.setFilter('active'))}>Active</button>
+                <button onClick={() => dispatch(todoSlice.actions.setFilter('completed'))}>Completed</button>
+                <button onClick={() => dispatch(todoSlice.actions.setFilter('trash'))}>Trash</button>
+            </div>
+            <ul>
+                {filteredTasks.map((task) => (
+                    <li key={task.id}>
+                        <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>{task.text}</span>
+                        <button onClick={() => dispatch(todoSlice.actions.toggleComplete(task.id))}>
+                            {task.completed ? 'Undo' : 'Complete'}
+                        </button>
+                        {filter === 'trash' ? (
+                            <button onClick={() => dispatch(todoSlice.actions.restoreTask(task.id))}>Restore</button>
+                        ) : (
+                            <button onClick={() => dispatch(todoSlice.actions.deleteTask(task.id))}>Delete</button>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+const HomePage = () => {
+    const isAuthenticated = useSelector((state: { auth: AuthState }) => state.auth.isAuthenticated);
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        const savedAuth = localStorage.getItem('token');
+        if (savedAuth) dispatch(authSlice.actions.login());
+    }, [dispatch]);
+
+    const handleLogin = () => {
+        dispatch(authSlice.actions.login());
+    };
+
+    const handleLogout = () => {
+        dispatch(authSlice.actions.logout());
+        localStorage.removeItem('token');
+    };
+
+    return (
+        <div>
+            {isAuthenticated ? (
+                <>
+                    <button onClick={handleLogout}>Logout</button>
+                    <ToDoPage />
+                </>
+            ) : (
+                <LoginPage onLogin={handleLogin} />
+            )}
+        </div>
+    );
+};
+
+const MyApp = () => (
+    <Provider store={store}>
+        <HomePage />
+    </Provider>
+);
+
+export default MyApp;

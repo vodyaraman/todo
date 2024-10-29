@@ -40,3 +40,51 @@ a {
     color-scheme: dark;
   }
 }
+
+@keyframes fadeInFromCenter {
+  0% {
+      opacity: 0;
+      transform: scale(0.5);
+  }
+
+  100% {
+      opacity: 1;
+      transform: scale(1);
+  }
+}
+
+@keyframes slide-left {
+  0% {
+      transform: translateX(-10%);
+      opacity: 0.75;
+  }
+
+  100% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}
+
+@keyframes slide-right {
+  0% {
+      transform: translateX(10%);
+      opacity: 0.75;
+  }
+
+  100% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}
+
+@keyframes slide-down {
+  0% {
+      transform: translateY(-10%);
+      opacity: 0;
+  }
+
+  100% {
+      transform: translateY(0);
+      opacity: 1;
+  }
+}  
