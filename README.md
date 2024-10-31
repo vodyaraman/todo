@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# To-Do Приложение на Redux и React
 
-## Getting Started
+## Обзор
+Этот проект представляет собой приложение для управления задачами, созданное с использованием React и Redux. Пользователь может добавлять задачи, отмечать их выполнение, удалять, а также фильтровать задачи по статусу (активные, выполненные или удаленные). Задачи сохраняются в `localStorage` для сохранения состояния при перезагрузке страницы.
 
-First, run the development server:
+## Функции
+- **Аутентификация**: Авторизация и выход через Redux Toolkit и тестовый внешний API (`https://reqres.in/api/`) работает по логину ```eve.holt@reqres.in```, пароль ```pistol```.
+- **Управление задачами**:
+  - Добавление новых задач.
+  - Отметка выполнения задач и их отмена.
+  - Удаление задач и восстановление из корзины.
+  - Удаление всех задач.
+  - Фильтрация задач по статусу (все, активные, выполненные, корзина).
+- **Сохранение**: Задачи сохраняются в `localStorage` и восстанавливаются при перезагрузке.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Стек технологий
+- **React**: Создание пользовательского интерфейса.
+- **Redux Toolkit**: Управление состоянием задач и аутентификации.
+- **RTK Query**: Обработка запросов к API для аутентификации.
+- **TypeScript**: Обеспечивает типизацию проекта.
+- **SCSS**: Стилизация компонентов.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Структура проекта
+- **Компоненты**:
+  - `ToDoPage`: Главный компонент для управления задачами.
+  - `HomePage`: Главная страница с кнопкой выхода.
+  - `MyApp`: Корневой компонент для аутентификации и маршрутизации.
+- **Управление состоянием Redux**:
+  - `authSlice`: Управляет состоянием аутентификации пользователя.
+  - `todoSlice`: Управляет задачами и фильтрами.
+  - `authApi`: Обрабатывает аутентификацию через внешний API.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Инструкции по установке
+1. **Клонируйте репозиторий**:
+   ```sh
+   git clone https://github.com/your-repository/todo-app.git
+   cd todo-app
+   ```
+2. **Установите зависимости**:
+   ```sh
+   npm install
+   ```
+3. **Запустите приложение**:
+   ```sh
+   npm run dev
+   ```
+4. **Откройте в браузере**:
+   Перейдите по адресу [http://localhost:3000](http://localhost:3000).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Скрипты
+- **`npm run dev`**: Запуск приложения в режиме разработки.
+- **`npm run build`**: Сборка приложения для продакшн.
+- **`npm run start`**: Запуск собранного приложения в продакшн-режиме.

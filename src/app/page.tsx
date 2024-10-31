@@ -1,43 +1,21 @@
 'use client'
 import React, { useEffect, useState } from 'react';
-import { Provider, useDispatch, useSelector } from 'react-redux';
-import { store, authSlice, todoSlice, AuthState, ToDoState, useLoginMutation } from './redux';
-
-const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
-    const dispatch = useDispatch();
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [login, { isLoading, isError }] = useLoginMutation();
-
-    const handleLogin = async () => {
-        try {
-            const response = await login({ email: username, password }).unwrap();
-            if (response.token) {
-                localStorage.setItem('token', response.token);
-                onLogin();
-                dispatch(authSlice.actions.login());
-            }
-        } catch (error) {
-            console.error('Login failed:', error);
-        }
-    };
-
-    return (
-        <div>
-            <h1>Login</h1>
-            <input placeholder="Email" value={username} onChange={(e) => setUsername(e.target.value)} />
-            <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <button onClick={handleLogin} disabled={isLoading}>Login</button>
-            {isError && <p style={{ color: 'red' }}>Login failed. Please try again.</p>}
-        </div>
-    );
-};
+import { useDispatch, useSelector } from 'react-redux';
+import { todoSlice, ToDoState } from './redux';
+import './page.scss';
 
 const ToDoPage = () => {
     const dispatch = useDispatch();
     const tasks = useSelector((state: { todo: ToDoState }) => state.todo.tasks);
     const filter = useSelector((state: { todo: ToDoState }) => state.todo.filter);
     const [taskText, setTaskText] = useState('');
+
+    useEffect(() => {
+        const savedTasks = localStorage.getItem('tasks');
+        if (savedTasks) {
+            dispatch(todoSlice.actions.setTasks(JSON.parse(savedTasks)));
+        }
+    }, [dispatch]);
 
     const filteredTasks = tasks.filter((task) => {
         if (filter === 'active') return !task.completed && !task.deleted;
@@ -50,31 +28,73 @@ const ToDoPage = () => {
         if (taskText.trim()) {
             dispatch(todoSlice.actions.addTask(taskText));
             setTaskText('');
+            localStorage.setItem('tasks', JSON.stringify([...tasks, {
+                id: Date.now(),
+                text: taskText,
+                completed: false,
+                deleted: false,
+            }]));
+        }
+    };
+
+    const handleDeleteTask = (taskId : number) => {
+        dispatch(todoSlice.actions.deleteTask(taskId));
+        const updatedTasks = tasks.map((task) => 
+            task.id === taskId ? { ...task, deleted: true } : task
+        );
+        localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+    };
+
+    const handleDeleteAllTasks = () => {
+        const ok = confirm("Delete all tasks?");
+        if (ok) {
+            dispatch(todoSlice.actions.deleteAllTasks());
+            localStorage.removeItem('tasks');
         }
     };
 
     return (
-        <div>
+        <div className='to-do-page'>
             <h1>To-Do List</h1>
-            <input placeholder="New task" value={taskText} onChange={(e) => setTaskText(e.target.value)} />
-            <button onClick={handleAddTask}>Add Task</button>
-            <div>
+            <div className='task-input'>
+                <input
+                    placeholder="New task"
+                    value={taskText}
+                    onChange={(e) => setTaskText(e.target.value)}
+                />
+                <button className='add-task-button' onClick={handleAddTask}>Add Task</button>
+            </div>
+            <div className='filter-buttons'>
                 <button onClick={() => dispatch(todoSlice.actions.setFilter('all'))}>All</button>
                 <button onClick={() => dispatch(todoSlice.actions.setFilter('active'))}>Active</button>
                 <button onClick={() => dispatch(todoSlice.actions.setFilter('completed'))}>Completed</button>
                 <button onClick={() => dispatch(todoSlice.actions.setFilter('trash'))}>Trash</button>
             </div>
-            <ul>
+            {tasks.length > 0 && <button className='delete-all-button' onClick={handleDeleteAllTasks}>Delete All Tasks</button>}
+            <ul className='task-list'>
                 {filteredTasks.map((task) => (
-                    <li key={task.id}>
-                        <span style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>{task.text}</span>
-                        <button onClick={() => dispatch(todoSlice.actions.toggleComplete(task.id))}>
+                    <li key={task.id} className={task.completed ? 'completed' : ''}>
+                        <span>{task.text} {task.completed && <span>✅</span>}</span>
+                        <button className='complete-button'
+                            onClick={() => {
+                                dispatch(todoSlice.actions.toggleComplete(task.id));
+                                const updatedTasks = tasks.map((t) =>
+                                    t.id === task.id ? { ...t, completed: !t.completed } : t
+                                );
+                                localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+                            }}>
                             {task.completed ? 'Undo' : 'Complete'}
                         </button>
                         {filter === 'trash' ? (
-                            <button onClick={() => dispatch(todoSlice.actions.restoreTask(task.id))}>Restore</button>
+                            <button className='restore-button' onClick={() => {
+                                dispatch(todoSlice.actions.restoreTask(task.id));
+                                const updatedTasks = tasks.map((t) =>
+                                    t.id === task.id ? { ...t, deleted: false } : t
+                                );
+                                localStorage.setItem('tasks', JSON.stringify(updatedTasks));
+                            }}>Restore</button>
                         ) : (
-                            <button onClick={() => dispatch(todoSlice.actions.deleteTask(task.id))}>Delete</button>
+                            <button className='delete-button' onClick={() => handleDeleteTask(task.id)}>Delete</button>
                         )}
                     </li>
                 ))}
@@ -84,41 +104,41 @@ const ToDoPage = () => {
 };
 
 const HomePage = () => {
-    const isAuthenticated = useSelector((state: { auth: AuthState }) => state.auth.isAuthenticated);
-    const dispatch = useDispatch();
-
-    useEffect(() => {
-        const savedAuth = localStorage.getItem('token');
-        if (savedAuth) dispatch(authSlice.actions.login());
-    }, [dispatch]);
-
-    const handleLogin = () => {
-        dispatch(authSlice.actions.login());
-    };
-
     const handleLogout = () => {
-        dispatch(authSlice.actions.logout());
-        localStorage.removeItem('token');
+        localStorage.removeItem('isAuthenticated');
+        window.location.href = "/auth";
     };
 
     return (
-        <div>
-            {isAuthenticated ? (
-                <>
-                    <button onClick={handleLogout}>Logout</button>
-                    <ToDoPage />
-                </>
-            ) : (
-                <LoginPage onLogin={handleLogin} />
-            )}
+        <div className='home-page'>
+            <button className='logout-button' onClick={handleLogout}>Logout</button>
+            <ToDoPage />
         </div>
     );
 };
 
-const MyApp = () => (
-    <Provider store={store}>
-        <HomePage />
-    </Provider>
-);
+export default function MyApp() {
+    const [isAuthenticated, setIsAuthenticated] = useState("");
 
-export default MyApp;
+    useEffect(() => {
+        const authStatus = localStorage.getItem('isAuthenticated');
+        if (authStatus) setIsAuthenticated(authStatus);
+        if (!authStatus) {
+            window.location.href = "/auth";
+        }
+    }, []);
+
+    if (isAuthenticated === null) {
+        return null; // Отображаем null до тех пор, пока состояние не будет инициализировано
+    }
+
+    return (
+        <div className='my-app'>
+            {isAuthenticated ? (
+                <HomePage />
+            ) : (
+                null
+            )}
+        </div>
+    );
+};

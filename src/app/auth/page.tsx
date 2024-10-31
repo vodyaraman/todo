@@ -1,9 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 'use client'
 import { useState } from "react";
+import { useLoginMutation, useRegisterMutation } from "../redux";
+import { useDispatch } from 'react-redux';
+import { authSlice } from '../redux';
 import "./auth.scss";
 
-export default function AuthOptions() {
+export default function AuthComponent() {
     const [showLogin, setShowLogin] = useState(false);
     const [showRegister, setShowRegister] = useState(false);
 
@@ -18,34 +21,34 @@ export default function AuthOptions() {
     };
 
     return (
-        <>
-            <div className="chat-app__auth">
-                <h2 className="chat-app__auth-title">
+        <div className="main">
+            <div className="auth">
+                <h2 className="auth-title">
                     Вы не вошли в систему
                 </h2>
-                <div className="chat-app__auth-buttons">
+                <div className="auth-buttons">
                     {!showLogin && !showRegister && (
                         <>
-                            <button className="chat-app__auth-button" onClick={handleShowLogin}>Войти</button>
-                            <button className="chat-app__auth-button" onClick={handleShowRegister}>Зарегистрироваться</button>
+                            <button className="auth-button" onClick={handleShowLogin}>Войти</button>
+                            <button className="auth-button" onClick={handleShowRegister}>Зарегистрироваться</button>
                         </>
                     )}
                 </div>
                 {showLogin && (
                     <>
                         <Login />
-                        <button className="chat-app__auth-button alt" onClick={handleShowRegister}>Регистрация</button>
+                        <button className="auth-button alt" onClick={handleShowRegister}>Регистрация</button>
                     </>
                 )}
                 {showRegister && (
                     <>
                         <Register />
-                        <button className="chat-app__auth-button alt" onClick={handleShowLogin}>Вход</button>
+                        <button className="auth-button alt" onClick={handleShowLogin}>Вход</button>
                     </>
                 )}
             </div>
-            <img src="https://st4.depositphotos.com/2673929/27392/i/450/depositphotos_273926318-stock-photo-white-office-interior-with-meeting.jpg" alt="" className='chat-app__auth-image' />
-        </>
+            <img src="https://funlines.in/cdn/shop/files/rn-image_picker_lib_temp_7c2c7585-524f-4708-85f1-fce88861738d.jpg?v=1694517780&width=1946" alt="" className='auth-image' />
+        </div>
     );
 };
 
@@ -53,17 +56,14 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [username, setUsername] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [register, { isLoading, isError }] = useRegisterMutation();
+    const dispatch = useDispatch();
 
-    const handleRegister = () => {
-        if (!email || !password || !confirmPassword || !username) {
+    const handleRegister = async () => {
+        if (!email || !password || !confirmPassword) {
             setError('Все поля должны быть заполнены');
-            return;
-        }
-        if (username.length < 3 || username.length > 15) {
-            setError('Имя пользователя должно содержать от 3 до 15 символов');
             return;
         }
         if (password !== confirmPassword) {
@@ -80,19 +80,24 @@ const Register = () => {
             return;
         }
         setError('');
+
+        try {
+            const response = await register({ email, password }).unwrap();
+            if (response) {
+                console.log('Регистрация прошла успешно:', response);
+                dispatch(authSlice.actions.login());
+                localStorage.setItem('isAuthenticated', 'true')
+                window.location.href = '/';
+            }
+        } catch (err) {
+            console.error('Ошибка регистрации:', err);
+        }
     };
 
     return (
         <div className="register">
             <h2 className="register__title">Регистрация</h2>
             {error && <div className="register__error">{error}</div>}
-            <input
-                className="register__input"
-                name="text"
-                placeholder="Имя пользователя (от 3 до 15 символов)"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-            />
             <input
                 className="register__input"
                 name="email"
@@ -126,7 +131,8 @@ const Register = () => {
                 />
                 Показать пароль
             </label>
-            <button className="register__button" onClick={handleRegister}>Продолжить</button>
+            <button className="register__button" onClick={handleRegister} disabled={isLoading}>Продолжить</button>
+            {isError && <div className="register__error">Ошибка регистрации. Пожалуйста, попробуйте снова.</div>}
         </div>
     );
 };
@@ -136,13 +142,29 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [login, { isLoading, isError }] = useLoginMutation();
+    const dispatch = useDispatch();
 
-    const handleLogin = () => {
+    const handleLogin = async () => {
         if (!email || !password) {
             setError('Все поля должны быть заполнены');
             return;
         }
         setError('');
+
+        try {
+            const response = await login({ email, password }).unwrap();
+            if (response.token) {
+                localStorage.setItem('token', response.token);
+                console.log('Вход выполнен успешно:', response);
+                dispatch(authSlice.actions.login()); // Обновляем состояние аутентификации
+                localStorage.setItem('isAuthenticated', 'true')
+                window.location.href = '/';
+            }
+        } catch (err) {
+            console.error('Ошибка входа:', err);
+            setError('Неверные учетные данные. Пожалуйста, попробуйте снова.');
+        }
     };
 
     return (
@@ -164,7 +186,8 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
             />
-            <button className="login__button" onClick={handleLogin}>Продолжить</button>
+            <button className="login__button" onClick={handleLogin} disabled={isLoading}>Продолжить</button>
+            {isError && <div className="login__error">Ошибка входа. Пожалуйста, попробуйте снова.</div>}
         </div>
     );
 };

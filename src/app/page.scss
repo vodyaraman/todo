@@ -1,0 +1,158 @@
+.home-page {
+  overflow-y: hidden;
+  .logout-button {
+    position: sticky;
+    top: 10px;
+    left: 0px;
+    background-color: #7354ff;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #ff3333;
+    }
+  }
+
+
+  // ToDoPage компонент
+  .to-do-page {
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    background-color: #ffffff;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 0px 8px;
+
+    .delete-all-button {
+      position: relative;
+      background-color: #f02121;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #bb2d2d;
+      }
+
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .task-input {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+
+      input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      button.add-task-button {
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+
+        &:hover {
+          background-color: #45a049;
+        }
+      }
+    }
+
+    .filter-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+
+      button {
+        background-color: #e0e0e0;
+        border: none;
+        padding: 8px 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.3s ease;
+
+        &.active {
+          background-color: #2196f3;
+          color: #fff;
+        }
+
+        &:hover {
+          background-color: #ccc;
+        }
+      }
+    }
+
+    .task-list {
+      list-style-type: none;
+      padding: 0;
+
+      li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        border-bottom: 1px solid #f0f0f0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        span {
+          flex-grow: 1;
+          text-decoration: none;
+          transition: color 0.3s;
+
+          &.completed {
+            text-decoration: line-through;
+            color: #999;
+          }
+        }
+
+        button {
+          margin-left: 10px;
+          background-color: #ff9800;
+          color: #fff;
+          border: none;
+          padding: 6px 12px;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: background-color 0.3s ease;
+
+          &.complete-button {
+            background-color: #4caf50;
+          }
+
+          &.delete-button {
+            background-color: #f44336;
+          }
+
+          &.restore-button {
+            background-color: #3f51b5;
+          }
+
+          &:hover {
+            filter: brightness(90%);
+          }
+        }
+      }
+    }
+  }
+}
